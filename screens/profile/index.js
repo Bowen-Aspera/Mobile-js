@@ -56,6 +56,7 @@ const Profile = () => {
 
   return (
     <>
+    // MVC ni siya since gina kuwa man niya ang data from user data response.data
       <View style={styles.container}>
         {/* Existing comment: Display Email */}
         <Text style={styles.label}>Email:</Text>
