@@ -1,28 +1,8 @@
-import { useState } from "react";
-import { StyleSheet, Button, View } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, Button, View, Text } from "react-native";
 import axios from "../../../plugins/axios";
 import InputField from "../../../components/InputField";
 
-// Singleton Design Pattern para sa Axios, where isa ra ka instace nga axios class ang mag exists
-const axiosInstance = (() => {
-  let instance;
-
-  const createInstance = () => {
-    const axiosInstance = axios.create();
-    return axiosInstance;
-  };
-
-  return {
-    getInstance: () => {
-      if (!instance) {
-        instance = createInstance();
-      }
-      return instance;
-    },
-  };
-})();
-
-// Factory Design Pattern, where when an end user registers, ma labeled sila as a "user"
 const createUser = (data) => {
   return {
     label: "user",
@@ -33,6 +13,27 @@ const createUser = (data) => {
   };
 };
 
+// Decorator: CharacterCounterDecorator
+const CharacterCounterDecorator = (WrappedComponent) => {
+  return ({ value, ...props }) => {
+    const [characterCount, setCharacterCount] = useState(value.length);
+
+    const handleChangeText = (text) => {
+      setCharacterCount(text.length);
+      props.onChangeText(text);
+    };
+
+    return (
+      <View>
+        <WrappedComponent {...props} value={value} onChangeText={handleChangeText} />
+        <Text style={styles.characterCount}>{characterCount}</Text>
+      </View>
+    );
+  };
+};
+
+const DecoratedInputField = CharacterCounterDecorator(InputField);
+
 const Registration = () => {
   const [data, onChangeData] = useState({
     email: "",
@@ -40,27 +41,28 @@ const Registration = () => {
     password: "",
     first_name: "",
     last_name: "",
-    birthdate: null,
+    birthdate: "",
     gender: "",
   });
 
   const handleRegistration = () => {
     const user = createUser(data);
-    const axiosInstance = axiosInstance.getInstance();
-    axiosInstance
+    axios
       .post("accounts/users/", user)
       .then((response) => {
         console.log(response.data);
       })
       .catch((error) => {
-        console.log(error.response.data);
+        console.log(
+          error.response ? error.response.data : error.message
+        );
       });
   };
 
   return (
     <>
-      <View style={style.container}>
-        <InputField
+      <View style={styles.container}>
+        <DecoratedInputField
           label="Email"
           placeholder="Your Email"
           value={data.email}
@@ -71,7 +73,7 @@ const Registration = () => {
             });
           }}
         />
-        <InputField
+        <DecoratedInputField
           label="Username"
           placeholder="Your Username"
           value={data.username}
@@ -82,7 +84,7 @@ const Registration = () => {
             });
           }}
         />
-        <InputField
+        <DecoratedInputField
           label="Password"
           placeholder="Your Password"
           value={data.password}
@@ -93,29 +95,29 @@ const Registration = () => {
             });
           }}
         />
-        <InputField
+        <DecoratedInputField
           label="First Name"
-          placeholder="Your Last Name"
+          placeholder="Your First Name"
           value={data.first_name}
-          onChangeText={(firstname) => {
+          onChangeText={(firstName) => {
             onChangeData({
               ...data,
-              first_name: firstname,
+              first_name: firstName,
             });
           }}
         />
-        <InputField
+        <DecoratedInputField
           label="Last Name"
           placeholder="Your Last Name"
           value={data.last_name}
-          onChangeText={(lastname) => {
+          onChangeText={(lastName) => {
             onChangeData({
               ...data,
-              last_name: lastname,
+              last_name: lastName,
             });
           }}
         />
-        <InputField
+        <DecoratedInputField
           label="Birthdate"
           placeholder="Your Birthdate"
           value={data.birthdate}
@@ -126,7 +128,7 @@ const Registration = () => {
             });
           }}
         />
-        <InputField
+        <DecoratedInputField
           label="Gender"
           placeholder="Your Gender"
           value={data.gender}
@@ -147,7 +149,7 @@ const Registration = () => {
 
 export default Registration;
 
-const style = StyleSheet.create({
+const styles = StyleSheet.create({
   inputFields: {
     borderColor: "black",
     borderWidth: 1,
@@ -156,5 +158,10 @@ const style = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     paddingVertical: 30,
+  },
+  characterCount: {
+    color: "gray",
+    fontSize: 12,
+    marginTop: 4,
   },
 });
